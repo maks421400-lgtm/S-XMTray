@@ -13,6 +13,22 @@ inline int preference = 0; // system, light, dark
 inline bool dark = false, highContrast = false;
 inline COLORREF background, surface, foreground, muted, accent, border;
 inline HBRUSH backgroundBrush = nullptr, surfaceBrush = nullptr;
+// Keep the previous frame on screen while updating a visible dialog. Never
+// enable redraw on a hidden window: WM_SETREDRAW(TRUE) would make it visible.
+class RedrawBatch {
+    HWND window_;
+public:
+    explicit RedrawBatch(HWND window):window_(window && IsWindowVisible(window)?window:nullptr) {
+        if(window_) SendMessageW(window_,WM_SETREDRAW,FALSE,0);
+    }
+    RedrawBatch(const RedrawBatch&)=delete;
+    RedrawBatch& operator=(const RedrawBatch&)=delete;
+    ~RedrawBatch() {
+        if(!window_ || !IsWindow(window_)) return;
+        SendMessageW(window_,WM_SETREDRAW,TRUE,0);
+        RedrawWindow(window_,nullptr,nullptr,RDW_INVALIDATE|RDW_ERASE|RDW_FRAME|RDW_ALLCHILDREN|RDW_UPDATENOW);
+    }
+};
 inline ULONG_PTR graphicsToken = 0;
 inline int px(HWND window,int value) { return MulDiv(value,GetDpiForWindow(window),96); }
 inline LRESULT CALLBACK fontLifetime(HWND control,UINT msg,WPARAM w,LPARAM l,UINT_PTR,DWORD_PTR) {
@@ -301,7 +317,11 @@ inline void apply(HWND dialog) {
         // Documented classic control painting supports explicit application colours.
         wchar_t name[64]{};GetClassNameW(child,name,64);
         bool push=wcscmp(name,L"Button")==0;
-        SetWindowTheme(child, highContrast||push ? nullptr : L"", highContrast||push ? nullptr : L"");
+        HANDLE nativeTheme=reinterpret_cast<HANDLE>(static_cast<INT_PTR>(highContrast||push?1:2));
+        if(GetPropW(child,L"QuietNativeTheme")!=nativeTheme) {
+            SetWindowTheme(child, highContrast||push ? nullptr : L"", highContrast||push ? nullptr : L"");
+            SetPropW(child,L"QuietNativeTheme",nativeTheme);
+        }
         return TRUE;
     },0);
     RedrawWindow(dialog,nullptr,nullptr,RDW_INVALIDATE|RDW_ERASE|RDW_ALLCHILDREN|RDW_FRAME);

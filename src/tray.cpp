@@ -38,8 +38,10 @@ std::unique_ptr<quiet::HotkeyRegistration> hotkeyRegistration;
 HWND hotkeyDialog = nullptr;
 HWND eqDialog = nullptr;
 void applyTheme() {
+    quiet::ui::RedrawBatch panelBatch(panel),hotkeyBatch(hotkeyDialog),eqBatch(eqDialog),settingsBatch(settingsDialog);
     quiet::ui::refresh();
     for(HWND dialog : {panel, hotkeyDialog, eqDialog, settingsDialog}) if(dialog) quiet::ui::apply(dialog);
+    updatePanel();updateSettings();
 }
 bool eqDirty = false, eqApplying = false, eqDraftSelection = false;
 std::atomic<bool> stopping{false};
@@ -441,8 +443,8 @@ void updateTray(bool add = false) {
 void showAbout() {
     auto state = snapshot();
     std::wstring text = tr(
-        L"S-XMTray 0.5.2\nУправление WF-1000XM5\n\nНеофициальная утилита, не связанная с Sony.\n\n",
-        L"S-XMTray 0.5.2\nWF-1000XM5 control\n\nUnofficial utility, not affiliated with Sony.\n\n");
+        L"S-XMTray 0.5.3\nУправление WF-1000XM5\n\nНеофициальная утилита, не связанная с Sony.\n\n",
+        L"S-XMTray 0.5.3\nWF-1000XM5 control\n\nUnofficial utility, not affiliated with Sony.\n\n");
     text += state.connected ? modeText(state.mode) : tr(L"Нет соединения с управлением наушников.", L"Headphone control is disconnected.");
     if(!state.features.firmware.empty()) text+=std::wstring(tr(L"\nПрошивка: ",L"\nFirmware: "))+widen(state.features.firmware.c_str());
     if(!state.features.warning.empty()) text+=std::wstring(tr(L"\nДополнительные функции: ",L"\nOptional features: "))+widen(state.features.warning.c_str());
@@ -451,7 +453,35 @@ void showAbout() {
                    L"\n\nConnect the headphones in Windows. If needed, close Sound Connect on your phone and choose Reconnect.\n\nDiagnostics: ");
         text += state.error;
     }
-    MessageBoxW(window, text.c_str(), tr(L"S-XMTray — сведения", L"S-XMTray — about"), MB_OK | MB_ICONINFORMATION);
+    // Only the fixed footer URL is actionable; device diagnostics remain text.
+    std::wstring escaped;
+    for(wchar_t c:text) {
+        if(c==L'&') escaped+=L"&amp;";
+        else if(c==L'<') escaped+=L"&lt;";
+        else if(c==L'>') escaped+=L"&gt;";
+        else escaped+=c;
+    }
+    TASKDIALOGCONFIG config{sizeof(config)};
+    config.hwndParent=window;
+    config.dwFlags=TDF_ENABLE_HYPERLINKS|TDF_ALLOW_DIALOG_CANCELLATION|TDF_SIZE_TO_CONTENT;
+    config.dwCommonButtons=TDCBF_OK_BUTTON;
+    config.pszWindowTitle=tr(L"S-XMTray — диагностика",L"S-XMTray — diagnostics");
+    config.pszContent=escaped.c_str();
+    config.pszFooter=L"<a href=\"https://github.com/maks421400-lgtm/S-XMTray\">GitHub · maks421400-lgtm/S-XMTray</a>";
+    config.pfCallback=[](HWND dialog,UINT notification,WPARAM,LPARAM link,LONG_PTR)->HRESULT {
+        constexpr auto repository=L"https://github.com/maks421400-lgtm/S-XMTray";
+        if(notification==TDN_HYPERLINK_CLICKED && link && wcscmp(reinterpret_cast<PCWSTR>(link),repository)==0) {
+            auto opened=ShellExecuteW(dialog,L"open",repository,nullptr,nullptr,SW_SHOWNORMAL);
+            if(reinterpret_cast<INT_PTR>(opened)<=32)
+                MessageBoxW(dialog,tr(L"Не удалось открыть браузер. Адрес репозитория:\nhttps://github.com/maks421400-lgtm/S-XMTray",
+                    L"Could not open the browser. Repository URL:\nhttps://github.com/maks421400-lgtm/S-XMTray"),L"S-XMTray",MB_OK|MB_ICONERROR);
+        }
+        return S_OK;
+    };
+    if(FAILED(TaskDialogIndirect(&config,nullptr,nullptr,nullptr))) {
+        text+=L"\n\nGitHub: https://github.com/maks421400-lgtm/S-XMTray";
+        MessageBoxW(window,text.c_str(),config.pszWindowTitle,MB_OK|MB_ICONINFORMATION);
+    }
 }
 void showMenu() {
     if (hotkeyDialog) { SetForegroundWindow(hotkeyDialog); return; }
@@ -585,7 +615,7 @@ INT_PTR CALLBACK settingsProc(HWND dialog,UINT msg,WPARAM w,LPARAM l) {
         } else if(id>=ThemeAuto && id<=ThemeDark) {
             int value=id-ThemeAuto;
             if(WritePrivateProfileStringW(L"General",L"Theme",std::to_wstring(value).c_str(),settingsFile.c_str())) {
-                quiet::ui::preference=value;applyTheme();
+                quiet::ui::preference=value;applyTheme();return TRUE;
             } else MessageBoxW(dialog,tr(L"Не удалось сохранить тему.",L"Could not save theme."),L"S-XMTray",MB_OK|MB_ICONERROR);
         } else if(id>=LangAuto && id<=LangEn) {
             int value=id-LangAuto;

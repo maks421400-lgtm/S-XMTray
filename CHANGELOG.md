@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.3
+
+- Apply theme changes in one redraw, without resetting unchanged native control styles.
+- Add a clickable repository link to Diagnostics.
+
 ## 0.5.2
 
 - Fixed missing dialog backgrounds after changing language or theme.

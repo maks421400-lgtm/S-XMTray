@@ -130,9 +130,15 @@ int wmain(int argc,wchar_t** argv) {
                 for(int lang:{2,1,2}) {
                     language=lang;updateSettings();
                     ShowWindow(dialog,SW_HIDE);
+                    applyTheme();
+                    if(IsWindowVisible(dialog)) { std::cerr<<"Theme change exposed hidden dialog\n";ok=false; }
                     ShowWindow(dialog,SW_SHOWNOACTIVATE);UpdateWindow(dialog);
                     for(int appearance:{0,1,2}) {
-                        quiet::ui::preference=appearance;applyTheme();updateSettings();
+                        quiet::ui::preference=appearance;applyTheme();
+                        if(!IsWindowVisible(dialog) || GetPropW(dialog,L"SysSetRedraw") ||
+                            !GetPropW(GetDlgItem(dialog,ThemeAuto+appearance),L"QuietSelected")) {
+                            std::cerr<<"Theme frame not committed\n";ok=false;
+                        }
                         UpdateWindow(dialog);
                         // Exercise a paint request that does not request erase.
                         RedrawWindow(dialog,nullptr,nullptr,RDW_INVALIDATE|RDW_NOERASE|RDW_UPDATENOW|RDW_NOCHILDREN);

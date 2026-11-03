@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $outputDirectory = Join-Path $projectRoot 'out'
-$stagingDirectory = Join-Path $outputDirectory 'S-XMTray-v0.5.2-windows-x64'
+$stagingDirectory = Join-Path $outputDirectory 'S-XMTray-v0.5.3-windows-x64'
 New-Item -ItemType Directory -Force -Path $stagingDirectory | Out-Null
 $releaseFiles = @{
     'build\S-XMTray.exe' = 'S-XMTray.exe'
@@ -20,7 +20,7 @@ foreach ($entry in $releaseFiles.GetEnumerator()) {
     New-Item -ItemType Directory -Force -Path (Split-Path -Parent $destination) | Out-Null
     Copy-Item -LiteralPath (Join-Path $projectRoot $entry.Key) -Destination $destination -Force
 }
-$archivePath = Join-Path $outputDirectory 'S-XMTray-v0.5.2-windows-x64.zip'
+$archivePath = Join-Path $outputDirectory 'S-XMTray-v0.5.3-windows-x64.zip'
 Add-Type -AssemblyName System.IO.Compression
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $stream = [IO.File]::Open($archivePath, [IO.FileMode]::Create)
