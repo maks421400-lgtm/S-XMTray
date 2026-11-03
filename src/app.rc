@@ -6,8 +6,8 @@
 3 ICON "../assets/ambient.ico"
 4 ICON "../assets/off.ico"
 1 VERSIONINFO
-FILEVERSION 0,5,1,0
-PRODUCTVERSION 0,5,1,0
+FILEVERSION 0,5,2,0
+PRODUCTVERSION 0,5,2,0
 FILEOS VOS_NT_WINDOWS32
 FILETYPE VFT_APP
 BEGIN
@@ -16,9 +16,9 @@ BEGIN
   BLOCK "040904B0"
   BEGIN
    VALUE "FileDescription", "S-XMTray - WF-1000XM5 noise control\0"
-   VALUE "FileVersion", "0.5.1\0"
+   VALUE "FileVersion", "0.5.2\0"
    VALUE "ProductName", "S-XMTray\0"
-   VALUE "ProductVersion", "0.5.1\0"
+   VALUE "ProductVersion", "0.5.2\0"
   END
  END
  BLOCK "VarFileInfo"

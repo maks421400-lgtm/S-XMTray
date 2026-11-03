@@ -441,8 +441,8 @@ void updateTray(bool add = false) {
 void showAbout() {
     auto state = snapshot();
     std::wstring text = tr(
-        L"S-XMTray 0.5.1\nУправление WF-1000XM5\n\nНеофициальная утилита, не связанная с Sony.\n\n",
-        L"S-XMTray 0.5.1\nWF-1000XM5 control\n\nUnofficial utility, not affiliated with Sony.\n\n");
+        L"S-XMTray 0.5.2\nУправление WF-1000XM5\n\nНеофициальная утилита, не связанная с Sony.\n\n",
+        L"S-XMTray 0.5.2\nWF-1000XM5 control\n\nUnofficial utility, not affiliated with Sony.\n\n");
     text += state.connected ? modeText(state.mode) : tr(L"Нет соединения с управлением наушников.", L"Headphone control is disconnected.");
     if(!state.features.firmware.empty()) text+=std::wstring(tr(L"\nПрошивка: ",L"\nFirmware: "))+widen(state.features.firmware.c_str());
     if(!state.features.warning.empty()) text+=std::wstring(tr(L"\nДополнительные функции: ",L"\nOptional features: "))+widen(state.features.warning.c_str());

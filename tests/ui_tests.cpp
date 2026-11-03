@@ -31,6 +31,9 @@ bool paintIsStable(HWND control) {
         memset(pixels,i&1?0x00:0xff,bytes);
         SendMessageW(control,WM_PRINTCLIENT,reinterpret_cast<WPARAM>(memory),PRF_CLIENT);
         GdiFlush();
+        if(GetDlgItem(control,IDC_SETTINGS_DEVICE) &&
+            GetPixel(memory,quiet::ui::px(control,12),quiet::ui::px(control,74))!=quiet::ui::background)
+            stable=false;
         if(!i) { memcpy(reference.data(),pixels,bytes);handles=GetGuiResources(GetCurrentProcess(),GR_GDIOBJECTS); }
         else if(memcmp(reference.data(),pixels,bytes)!=0) stable=false;
     }
@@ -119,6 +122,25 @@ int wmain(int argc,wchar_t** argv) {
                 ok=paintIsStable(field)&&ok;
                 SendMessageW(field,HKM_SETHOTKEY,0,0);
                 ok=paintIsStable(field)&&ok; // placeholder and assigned text
+            }
+            if(test.id==IDD_SETTINGS) {
+                // Match language change -> hide/reopen -> theme change without
+                // touching the user's saved preferences or Bluetooth session.
+                SetWindowPos(dialog,nullptr,-10000,-10000,0,0,SWP_NOSIZE|SWP_NOZORDER|SWP_NOACTIVATE);
+                for(int lang:{2,1,2}) {
+                    language=lang;updateSettings();
+                    ShowWindow(dialog,SW_HIDE);
+                    ShowWindow(dialog,SW_SHOWNOACTIVATE);UpdateWindow(dialog);
+                    for(int appearance:{0,1,2}) {
+                        quiet::ui::preference=appearance;applyTheme();updateSettings();
+                        UpdateWindow(dialog);
+                        // Exercise a paint request that does not request erase.
+                        RedrawWindow(dialog,nullptr,nullptr,RDW_INVALIDATE|RDW_NOERASE|RDW_UPDATENOW|RDW_NOCHILDREN);
+                        if(GetUpdateRect(dialog,nullptr,FALSE)) { std::cerr<<"Dialog paint not validated\n";ok=false; }
+                        ok=paintIsStable(dialog)&&ok;
+                    }
+                }
+                language=1;quiet::ui::preference=theme;applyTheme();updateSettings();
             }
             if(test.id==IDD_EQUALIZER) {
                 HWND preset=GetDlgItem(dialog,IDC_EQ_PRESET),slider=GetDlgItem(dialog,IDC_EQ_SLIDER_FIRST);

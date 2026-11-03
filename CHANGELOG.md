@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.2
+
+- Fixed missing dialog backgrounds after changing language or theme.
+- Added regression coverage for language/theme changes and background repainting.
+- Updated the English README with English screenshots.
+
 ## 0.5.1
 
 First public release as S-XMTray, previously developed as QuietTray.

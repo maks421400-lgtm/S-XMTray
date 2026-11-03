@@ -307,8 +307,12 @@ inline void apply(HWND dialog) {
     RedrawWindow(dialog,nullptr,nullptr,RDW_INVALIDATE|RDW_ERASE|RDW_ALLCHILDREN|RDW_FRAME);
 }
 inline bool message(HWND dialog, UINT msg, WPARAM w, LPARAM l, INT_PTR& result) {
-    if(msg==WM_ERASEBKGND) {
-        HDC dc=reinterpret_cast<HDC>(w);RECT r{};GetClientRect(dialog,&r);
+    // A composited dialog can be repainted without a background-erase request,
+    // especially after its children change text or theme. Paint an opaque frame
+    // on every WM_PAINT; clearing separately would reintroduce flicker.
+    if(msg==WM_ERASEBKGND) { result=TRUE;return true; }
+    if(msg==WM_PAINT || msg==WM_PRINTCLIENT) {
+        ControlPaint paint(dialog,msg,w);HDC dc=paint.dc();RECT r=paint.rect;
         FillRect(dc,&r,backgroundBrush);rounded(dc,r,background,border,px(dialog,24));
         auto separator=[&](int y,int inset) {
             HPEN pen=CreatePen(PS_SOLID,1,border);auto old=SelectObject(dc,pen);

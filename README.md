@@ -4,9 +4,9 @@ A small Windows tray app for **Sony WF-1000XM5**. Change noise control without r
 
 [Download for Windows x64](https://github.com/maks421400-lgtm/S-XMTray/releases/latest) · [Русский](README.ru.md)
 
-<img src="docs/images/panel-light.png" width="320" alt="Light theme"> <img src="docs/images/panel-dark.png" width="320" alt="Dark theme">
+<img src="docs/images/panel-light-en.png" width="320" alt="Light theme"> <img src="docs/images/panel-dark-en.png" width="320" alt="Dark theme">
 
-Interface previews with example battery readings.
+English interface in light and dark themes.
 
 ## Features
 
