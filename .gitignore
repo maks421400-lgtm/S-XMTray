@@ -1,0 +1,11 @@
+*.apk
+*.xapk
+.local/
+build/
+out/
+__pycache__/
+.vs/
+*.obj
+*.pdb
+*.ilk
+design/
